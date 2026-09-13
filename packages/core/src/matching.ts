@@ -12,11 +12,12 @@ import {
   hasVerifiedNonMatch,
   countVerifiedMatches,
   computePoolStats,
-  computeUtility,
+  computeUtilityBreakdown,
   compareByUtility,
   applyMerchantDiversity,
   buildDecisionFactors,
   assignBadges,
+  isEligibleOffer,
 } from './matchingCore';
 
 export interface SearchProductsContext {
@@ -84,11 +85,15 @@ export async function searchProducts(input: SearchProductsInput, ctx: SearchProd
   // merchant scope, or a per-call merchant_id filter within a vertical-scoped connection).
   let candidates = listCandidates(vertical, ctx.merchantId);
   if (input.merchant_id) candidates = candidates.filter((c) => c.merchant_id === input.merchant_id);
+  // The demo data has explicit offer state, stock and shipping availability. These are
+  // eligibility constraints, never soft scoring signals.
+  candidates = candidates.filter(isEligibleOffer);
   if (filters.price_max !== undefined) candidates = candidates.filter((c) => c.price_amount <= filters.price_max!);
   if (filters.currency !== undefined) candidates = candidates.filter((c) => c.currency === filters.currency);
   if (filters.availability !== undefined) candidates = candidates.filter((c) => c.availability === filters.availability);
-
-  const requestedAttrs = requirements.map((r) => r.attribute);
+  if (filters.delivery_days_max !== undefined) {
+    candidates = candidates.filter((c) => c.estimated_days_max <= filters.delivery_days_max!);
+  }
 
   if (candidates.length === 0) {
     logSearch({
@@ -102,6 +107,25 @@ export async function searchProducts(input: SearchProductsInput, ctx: SearchProd
       impressions: [],
     });
     return { status: 'NO_MATCH', products: [] };
+  }
+
+  // The demo has no FX rates. Never normalize incomparable amounts as if they shared a
+  // currency; ask the caller to choose instead. (The committed dataset is AUD-only today,
+  // but this keeps future seed additions safe.)
+  const currencies = [...new Set(candidates.map((c) => c.currency))];
+  if (currencies.length > 1) {
+    const question = `Which currency should I use? Available currencies are ${currencies.sort().join(', ')}.`;
+    logSearch({
+      request_text: input.request_text,
+      normalized_intent: { attributes: Object.fromEntries(requirements.map((r) => [r.attribute, r.value])) },
+      hard_filters: filters,
+      preferred_requirements: {},
+      result_status: 'CLARIFICATION_REQUIRED',
+      client_name: input.client?.name ?? ctx.source,
+      results: [],
+      impressions: [],
+    });
+    return { status: 'CLARIFICATION_REQUIRED', clarification_question: question, products: [] };
   }
 
   // Step 3: hybrid candidate retrieval. Structured survivors first (TRUE state, all tiers
@@ -142,13 +166,26 @@ export async function searchProducts(input: SearchProductsInput, ctx: SearchProd
   }));
 
   // Step 4: deterministic multi-objective utility ranking. Stage A (verifiedCount) is
-  // computed by compareByUtility itself; Stage B blends price/delivery/trust/similarity
+  // computed by compareByUtility itself; Stage B blends relevance/price/trust/fulfillment
   // via computeUtility, normalized over the FULL survivor pool (not just the eventual
   // finalists) so the utility score reflects real spread, not just whatever happens to make
   // the cut.
   const pool = computePoolStats(withSimilarity.map((e) => e.product));
   const ranked = withSimilarity
-    .map((e) => ({ ...e, merchant_id: e.product.merchant_id, utility: computeUtility({ ...e.product, similarity: e.similarity }, pool) }))
+    .map((e) => {
+      const utilityBreakdown = computeUtilityBreakdown({
+        ...e.product,
+        verifiedCount: e.verifiedCount,
+        requirementCount: requirements.length,
+        similarity: e.similarity,
+      }, pool);
+      return {
+        ...e,
+        merchant_id: e.product.merchant_id,
+        utility: utilityBreakdown.utility,
+        utilityBreakdown,
+      };
+    })
     .sort(compareByUtility);
 
   // Step 5: merchant diversity — no single merchant crowds out the comparison.
@@ -168,7 +205,7 @@ export async function searchProducts(input: SearchProductsInput, ctx: SearchProd
         ...r,
         status: discloseRequirementStatus(e.approved[r.attribute]?.visibility, r.status),
       }));
-      const decisionFactors = buildDecisionFactors(disclosedReqResults, { ...e.product, similarity: e.similarity }, finalistPool);
+      const decisionFactors = buildDecisionFactors(disclosedReqResults, e.product, finalistPool);
       const badge = badgeByEntry.get(e.product) ?? null;
 
       let reason: string | null;
@@ -213,7 +250,7 @@ export async function searchProducts(input: SearchProductsInput, ctx: SearchProd
     price_amount: e.product.price_amount,
     price_percentile: pool.maxPrice === pool.minPrice ? 0.5 : (e.product.price_amount - pool.minPrice) / (pool.maxPrice - pool.minPrice),
     delivery_days_min: e.product.estimated_days_min,
-    trust_score: e.product.average_rating,
+    trust_score: e.utilityBreakdown.trust,
     review_count: e.product.review_count,
     semantic_similarity: e.similarity,
     utility_score: (e as { utility?: number }).utility ?? null,

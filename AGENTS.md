@@ -112,8 +112,9 @@ export SDKROOT=$(xcrun --show-sdk-path) && npm rebuild better-sqlite3
 
 ## The 4 MCP tools (`packages/schemas/src/mcpTools.ts` has the exact Zod shapes)
 
-- **search_products** — `request_text` (+ optional `filters.price_max/currency/availability`,
-  `merchant_id` to narrow within a vertical-scoped connection, `max_results`, `client.name`)
+- **search_products** — `request_text` (+ optional
+  `filters.price_max/currency/availability/delivery_days_max`, `merchant_id` to narrow within
+  a vertical-scoped connection, `max_results`, `client.name`)
   → `{ status, clarification_question?, products[] }`. Each product carries `merchant_id`/
   `merchant_name` (results can come from different merchants), `decision_factors` (structured,
   disclosure-filtered reasons), `badge` (`best_overall`/`lowest_price`/`fastest_delivery`/
@@ -137,10 +138,14 @@ UNKNOWN`. Evidence tri-state for catalogue attributes: `DIRECT / AMBIGUOUS / NON
 
 ```
 classify vertical (only if connection is unscoped)
-  -> normalize buyer language -> hard filters -> hybrid candidate retrieval
+  -> normalize buyer language -> hard filters -> offer eligibility (excludes out_of_stock/
+     discontinued/zero-stock/non-shippable offers before ranking, never after)
+  -> currency-mismatch check (asks which currency, never silently compares across them)
+  -> hybrid candidate retrieval
   -> Stage A: bucket by TRUE verified-requirement-match count (primary key, always)
-  -> Stage B: within a bucket, deterministic multi-objective utility
-     (price + delivery + trust + semantic similarity, weights in matchingCore.ts)
+  -> Stage B: within a bucket, deterministic multi-objective utility — relevance (attribute-
+     match ratio + semantic similarity), price, trust, fulfillment (delivery window +
+     shipping fee); weights and sub-weights in matchingCore.ts
   -> merchant diversity (cap 2 per merchant by default)
   -> decision_factors + badge (deterministic, disclosure-filtered)
   -> LLM verbalization only (generateReason.ts) — never ranks, never adds a claim

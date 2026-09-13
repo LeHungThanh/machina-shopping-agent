@@ -12,6 +12,7 @@ export const SearchProductsInputSchema = z.object({
       price_max: z.number().positive().optional(),
       currency: z.string().optional(),
       availability: z.string().optional(),
+      delivery_days_max: z.number().int().nonnegative().optional(),
     })
     .partial()
     .optional(),

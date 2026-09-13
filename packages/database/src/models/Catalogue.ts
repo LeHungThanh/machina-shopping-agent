@@ -18,6 +18,7 @@ export interface CatalogueEntry {
   currency: string;
   availability: string;
   stock_quantity: number | null;
+  shipping_available: number;
   shipping_countries_json: string;
   shipping_fee: number | null;
   estimated_days_min: number;
@@ -27,7 +28,7 @@ export interface CatalogueEntry {
 const CANDIDATE_SELECT = `
   SELECT p.id, p.merchant_id, m.name AS merchant_name, o.id AS merchant_offer_id, p.canonical_product_id,
          p.title, p.long_description, p.average_rating, p.review_count,
-         o.price_amount, o.currency, o.availability, o.stock_quantity,
+         o.price_amount, o.currency, o.availability, o.stock_quantity, o.shipping_available,
          o.shipping_countries_json, o.shipping_fee, o.estimated_days_min, o.estimated_days_max
   FROM products p
   JOIN merchants m ON m.id = p.merchant_id

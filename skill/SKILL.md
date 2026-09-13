@@ -37,7 +37,7 @@ client-side is a hint at best, never authoritative.
 ```json
 {
   "request_text": "I need a roomy shoe for long road runs under 4 million VND because my feet roll inward.",
-  "filters": { "price_max": 4000000, "currency": "VND", "availability": "in_stock" },
+  "filters": { "price_max": 4000000, "currency": "VND", "availability": "in_stock", "delivery_days_max": 5 },
   "max_results": 5,
   "client": { "name": "<your agent name>" }
 }
