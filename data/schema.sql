@@ -152,12 +152,11 @@ SELECT p.id AS product_id, p.canonical_product_id, p.title, p.subtitle, p.short_
        p.merchant_id, m.name AS merchant_name, m.slug AS merchant_slug,
        o.id AS merchant_offer_id, o.price_amount AS price, o.currency, o.availability,
        o.shipping_available, o.shipping_countries_json, o.shipping_fee, o.estimated_days_min, o.estimated_days_max,
-       ma.file_path AS primary_image_path, ma.alt_text AS primary_image_alt,
+       NULL AS primary_image_path, NULL AS primary_image_alt,
        p.average_rating, p.review_count, p.product_url
 FROM products p
 JOIN merchants m ON m.id = p.merchant_id
 JOIN merchant_offers o ON o.variant_id = p.primary_variant_id AND o.is_current = 1
-JOIN media_assets ma ON ma.product_id = p.id AND ma.role = 'primary'
 WHERE p.status = 'active' AND m.status = 'active';
 
 CREATE VIEW mcp_agent_visible_facts AS

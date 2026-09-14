@@ -21,11 +21,11 @@
   },
   "options": [
     {
-      "product_id": "M01-P0037",
-      "canonical_product_id": "CP-M01-P0037",
-      "merchant_id": "M01",
-      "merchant_name": "Velora Runworks",
-      "title": "Velora Guide Ion 37",
+      "product_id": "M001-P0037",
+      "canonical_product_id": "CP-M001-P0037",
+      "merchant_id": "M001",
+      "merchant_name": "Aldercraft Runworks",
+      "title": "Aldercraft Guide Ion 37",
       "price": {
         "amount": 190.2,
         "currency": "AUD"
@@ -59,14 +59,14 @@
         "Current price is within the synthetic budget",
         "Current offer ships to AU"
       ],
-      "product_url": "https://example.invalid/m01/products/m01-p0037"
+      "product_url": "https://example.invalid/m001/products/m001-p0037"
     },
     {
-      "product_id": "M01-P0013",
-      "canonical_product_id": "CP-M01-P0013",
-      "merchant_id": "M01",
-      "merchant_name": "Velora Runworks",
-      "title": "Velora Ridge Crest 13",
+      "product_id": "M001-P0013",
+      "canonical_product_id": "CP-M001-P0013",
+      "merchant_id": "M001",
+      "merchant_name": "Aldercraft Runworks",
+      "title": "Aldercraft Ridge Crest 13",
       "price": {
         "amount": 149.4,
         "currency": "AUD"
@@ -100,14 +100,14 @@
         "Current price is within the synthetic budget",
         "Current offer ships to AU"
       ],
-      "product_url": "https://example.invalid/m01/products/m01-p0013"
+      "product_url": "https://example.invalid/m001/products/m001-p0013"
     },
     {
-      "product_id": "M01-P0025",
-      "canonical_product_id": "CP-M01-P0025",
-      "merchant_id": "M01",
-      "merchant_name": "Velora Runworks",
-      "title": "Velora Velocity Flux 25",
+      "product_id": "M001-P0025",
+      "canonical_product_id": "CP-M001-P0025",
+      "merchant_id": "M001",
+      "merchant_name": "Aldercraft Runworks",
+      "title": "Aldercraft Velocity Flux 25",
       "price": {
         "amount": 169.8,
         "currency": "AUD"
@@ -141,14 +141,14 @@
         "Current price is within the synthetic budget",
         "Current offer ships to AU"
       ],
-      "product_url": "https://example.invalid/m01/products/m01-p0025"
+      "product_url": "https://example.invalid/m001/products/m001-p0025"
     },
     {
-      "product_id": "M01-P0004",
-      "canonical_product_id": "CP-M01-P0004",
-      "merchant_id": "M01",
-      "merchant_name": "Velora Runworks",
-      "title": "Velora Flow Echo 4",
+      "product_id": "M001-P0004",
+      "canonical_product_id": "CP-M001-P0004",
+      "merchant_id": "M001",
+      "merchant_name": "Aldercraft Runworks",
+      "title": "Aldercraft Flow Echo 4",
       "price": {
         "amount": 134.1,
         "currency": "AUD"
@@ -179,14 +179,14 @@
         "Current price is within the synthetic budget",
         "Current offer ships to AU"
       ],
-      "product_url": "https://example.invalid/m01/products/m01-p0004"
+      "product_url": "https://example.invalid/m001/products/m001-p0004"
     },
     {
-      "product_id": "M01-P0005",
-      "canonical_product_id": "CP-M01-P0005",
-      "merchant_id": "M01",
-      "merchant_name": "Velora Runworks",
-      "title": "Velora Flow Flux 5",
+      "product_id": "M001-P0005",
+      "canonical_product_id": "CP-M001-P0005",
+      "merchant_id": "M001",
+      "merchant_name": "Aldercraft Runworks",
+      "title": "Aldercraft Flow Flux 5",
       "price": {
         "amount": 135.8,
         "currency": "AUD"
@@ -216,7 +216,7 @@
         "Current price is within the synthetic budget",
         "Current offer ships to AU"
       ],
-      "product_url": "https://example.invalid/m01/products/m01-p0005"
+      "product_url": "https://example.invalid/m001/products/m001-p0005"
     }
   ]
 }

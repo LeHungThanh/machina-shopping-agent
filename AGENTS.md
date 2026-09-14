@@ -33,8 +33,8 @@ machina/
 │   └── retrieval/       embeddings-based Validation Lab benchmark + report builder
 ├── mcp/server/          MCP server (stdio, @modelcontextprotocol/sdk) — 4 tools
 ├── skill/SKILL.md        agent-facing instructions (symlinked into .claude/skills/machina/)
-├── data/                 the synthetic 9-merchant dataset (see below)
-├── scripts/              one-off migration scripts (ontology generation, dataset reshape)
+├── data/                 the synthetic 100-merchant dataset (see below)
+├── scripts/              one-off migration scripts (ontology generation)
 └── tests/                Vitest (unit, mocked LLM) + tests/mcp-smoke.ts (manual, live)
 ```
 
@@ -71,12 +71,12 @@ startup.
 ```bash
 npm install
 npm run db:init                    # create/refresh the SQLite schema from data/schema.sql
-npm run db:seed                    # bulk-load the 9-merchant dataset (generic JSONL loader,
+npm run db:seed                    # bulk-load the 100-merchant dataset (generic JSONL loader,
                                     # packages/database/src/seed.ts) — idempotent
-node scripts/migrate-v5-dataset.js # one-off: generates data/ontologies/*.json + reshapes
-                                    # running_shoes into 3 competing merchants (M01/M10/M11).
-                                    # Already applied to the committed data/ — re-run only if
-                                    # you reset data/jsonl/ from the original dataset export.
+node scripts/generate-ontologies.js # one-off: generates data/ontologies/*.json from the
+                                    # dataset's own categories/ontology_attributes. Already
+                                    # applied to the committed data/ — re-run only if you
+                                    # replace data/jsonl/ with a different dataset export.
 npm run dev:dashboard               # Next.js dashboard at localhost:3000
 npm run mcp:server                  # MCP server over stdio (whole-database by default; set
                                     # MACHINA_VERTICAL or MACHINA_MERCHANT_ID to narrow)
@@ -122,9 +122,11 @@ export SDKROOT=$(xcrun --show-sdk-path) && npm rebuild better-sqlite3
   ranking and never states anything not already in `decision_factors`).
 - **get_product_details** — `product_id` → title, price, currency, merchant identity,
   approved AGENT_VISIBLE attributes with evidence provenance, `images[]`, and published
-  `review_highlights[]`. Also returns the primary product image as a real embedded MCP image
-  content block (base64), not just a file-path string, so a calling agent can render it
-  inline.
+  `review_highlights[]`. When a product has media assets, the primary image is also returned
+  as a real embedded MCP image content block (base64), not just a file-path string, so a
+  calling agent can render it inline — the current 100-merchant dataset ships with zero
+  images, so `images` is always `[]` and no image block is sent (the code degrades
+  gracefully; this isn't a bug, see Known limitations).
 - **check_suitability** — `product_id` + `attribute` + `requested_value` →
   `SUITABLE / NOT_SUITABLE / INSUFFICIENT_DATA`.
 - **create_offer** — `product_id` (+ `quantity`) → a mock, non-binding draft offer. **No real
@@ -176,7 +178,7 @@ the dashboard's Approval page (defaults to `AGENT_VISIBLE`):
 
 `match_status` and the top-level request status are derived from the *disclosed*
 requirements, never the true ones. **Live-verified example, still in the database**:
-`M01-P0001` has `intended_use=daily-trainer` (MATCHING_ONLY) and
+`M001-P0001` has `intended_use=daily-trainer` (MATCHING_ONLY) and
 `water_resistance=water-resistant` (INTERNAL_ONLY) — a search for "a daily trainer that's
 water resistant" ranks it using both true facts, but its returned `requirements` show
 `UNKNOWN` for both, `decision_factors` mentions neither, and `get_product_details` omits both
@@ -200,33 +202,39 @@ attributes entirely.
   `product_id`**, via the one shared `belongsToScope()` — don't add a new product-id-taking
   tool without the same check.
 - **Held-out query set freeze is per merchant**: once locked, cannot be re-seeded or edited.
-  (Note: the current 9-merchant dataset ships with no held-out fixtures at all yet — see
+  (Note: the current 100-merchant dataset ships with no held-out fixtures at all yet — see
   Known limitations, below.)
 - **Product display titles**: this dataset's `products.title` already includes the brand
-  (e.g. `"Velora Ridge Crest 13"`) — never prepend brand again.
+  (e.g. `"Aldercraft Ridge Crest 13"`) — never prepend brand again.
 
 ## The dataset
 
-`data/` holds a synthetic 9-merchant, 9-vertical dataset (`data/SOURCE_README.md` has the
-full provenance note — entirely synthetic, never present it as real commercial data):
+`data/` holds a synthetic **100-merchant, 9-vertical** dataset (`data/SOURCE_README.md` has
+the full provenance note — entirely synthetic, never present it as real commercial data):
 running_shoes, travel_backpacks, wireless_headphones, coffee_makers, facial_skincare,
-desk_lamps, water_bottles, yoga_mats, wristwatches — one merchant each, **except
-running_shoes**, which was reshaped (`scripts/migrate-v5-dataset.js`) into 3 competing
-merchants (M01 Velora Runworks, M10 Ridgemark Trailhead, M11 Solace Track Supply) sharing
-canonical products at different prices/delivery/stock, so cross-merchant ranking has
-something real to demonstrate. `data/assets/products/<id>/*.webp` holds real product images
-(~71MB) referenced by `media_assets` and embedded live by `get_product_details`.
+desk_lamps, water_bottles, yoga_mats, wristwatches, with merchants distributed deterministically
+across them (~11–12 merchants per vertical). Unlike the earlier 9-merchant showcase dataset,
+**every vertical here already has genuine multi-merchant competition** — no hand-reshaping
+needed; `search_products` naturally ranks across ~11 real, distinct merchants for any
+vertical. Products don't share a `canonical_product_id` across merchants (each merchant's
+5,000-product catalogue is independently generated), so ranking compares functionally
+matching but not identical listings — a more realistic scenario than "the same SKU, three
+sellers," and one the ranking pipeline never assumed in the first place. Scale: 100
+merchants, 5,000 products, 40,000 product facts, 100,000 reviews. **This dataset has zero
+images** (`media_assets` is empty by design — see the dataset's own README) — see Known
+limitations.
 
 ## Known limitations (honest, not hidden)
 
+- **No product images in this dataset.** `media_assets` ships with zero rows;
+  `get_product_details`'s `images` is always `[]` and no MCP image content block is ever
+  sent. The image-embedding code itself is intact and was previously verified against the
+  9-merchant dataset (which did have real images) — this is a data characteristic, not a
+  regression.
 - **The Validation Lab / Report page has no held-out query fixtures for this dataset.**
   Freezing/benchmarking will report "need both a baseline and an enriched run" until someone
   authors held-out queries + ground truth for these merchants — this is a data-authoring gap,
   not a code bug. The Report page itself renders correctly and degrades gracefully.
 - **Live demand aggregation** (the Dashboard's "what agents are asking for" panel) is derived
   from `search_requests`/`ranking_impressions`, scoped to one vertical's merchants — it only
-  reflects live MCP traffic, not the old dataset's pre-seeded historical request log (which
-  no longer exists in this schema).
-- Only `running_shoes` currently has real multi-merchant competition; the other 8 verticals
-  are reachable (whole-database scope resolves them fine) but single-merchant, so ranking
-  diversity/badges won't visibly differ there.
+  reflects live MCP traffic, not any pre-seeded historical request log (this schema has none).

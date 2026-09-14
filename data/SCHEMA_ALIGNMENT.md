@@ -1,34 +1,24 @@
-# Alignment with the Machina Product & Merchant Database specification
+# Schema alignment
 
-## Added in the offer-model upgrade
+This dataset preserves the normalized Machina product-and-merchant model used by the nine-merchant fixture.
 
-- Merchant `slug`, `website_url`, and constrained sync status.
-- `canonical_products` for cross-merchant identity.
-- `products.canonical_product_id` and validated `raw_data_json`.
-- `merchant_offers` with current price, availability, stock, shipping countries,
-  fee, delivery estimate, return policy, warranty, and sync timestamp.
-- Real two-row price history for every variant.
-- `product_keywords` with normalized term, source, confidence, and unique constraint.
-- `product_aliases`, `catalogue_sync_logs`, and `merchant_shipping_rules`.
-- JSON validity constraints for facts, raw merchant records, search data, and shipping.
-- Recommended merchant, product, keyword, attribute, price, and availability indexes.
-- Nine PurchaseIntent fixtures and 45 ranked result fixtures.
-- MCP projections containing merchant identity, offer details, match explanations,
-  unknown attributes, shipping, and product URL.
-- JSON Schema contracts and a full generated response example.
+## Included
 
-## Preserved from the deeper catalogue model
+- Merchant identity and lifecycle status
+- Merchant-specific brands, categories and product families
+- Canonical product identity and merchant listings
+- Three variants per product
+- Current offer, price history, inventory, shipping and return information
+- Twenty synthetic reviews and one aspect extraction per review
+- Eight controlled attributes per product
+- Evidence documents, exact spans, approval decisions and visibility controls
+- Search documents, normalized keywords, aliases, sample intents and ranked results
+- JSON Schema contracts and SQLite MCP-safe views
 
-- Product families and variants.
-- Four indexed images plus one thumbnail per product.
-- Reviews and aspect summaries.
-- Evidence documents, exact spans, fact approvals, and visibility controls.
-- Separate agent-visible and internal matching documents.
+## Deliberately excluded
 
-## Intentional showcase constraint
+- Product image files
+- Thumbnails and source contact sheets
+- Populated `media_assets` records
 
-The nine merchants occupy nine different verticals, so the current seed has a
-one-to-one mapping between canonical product and merchant listing. This preserves the
-requested non-overlapping store catalogues. The database permits multiple products
-from different merchants to reference one canonical product when an overlapping
-catalogue fixture is needed.
+The empty `media_assets` table and nullable image columns in `mcp_product_cards` preserve interface compatibility for consumers that also use image-enabled Machina datasets.

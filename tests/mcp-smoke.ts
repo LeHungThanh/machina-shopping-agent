@@ -34,17 +34,17 @@ async function main() {
   });
   console.log(JSON.stringify(search.structuredContent, null, 2));
 
-  console.log('\n--- get_product_details: M01-P0013 ---');
+  console.log('\n--- get_product_details: M001-P0001 ---');
   const details = await client.callTool({
     name: 'get_product_details',
-    arguments: { product_id: 'M01-P0013' },
+    arguments: { product_id: 'M001-P0001' },
   });
   console.log(JSON.stringify(details.structuredContent, null, 2));
 
-  console.log('\n--- get_product_details: M02-P0001 (a DIFFERENT vertical — v6 default is whole-database, so this now legitimately succeeds) ---');
+  console.log('\n--- get_product_details: M002-P0001 (a DIFFERENT vertical — v6 default is whole-database, so this now legitimately succeeds) ---');
   const crossVertical = await client.callTool({
     name: 'get_product_details',
-    arguments: { product_id: 'M02-P0001' },
+    arguments: { product_id: 'M002-P0001' },
   });
   console.log(JSON.stringify(crossVertical.structuredContent, null, 2));
 
@@ -55,17 +55,17 @@ async function main() {
   });
   console.log('isError:', unknown.isError, JSON.stringify(unknown.content, null, 2));
 
-  console.log('\n--- check_suitability: M01-P0013 / surface / track ---');
+  console.log('\n--- check_suitability: M001-P0001 / surface / track ---');
   const suit = await client.callTool({
     name: 'check_suitability',
-    arguments: { product_id: 'M01-P0013', attribute: 'surface', requested_value: 'track' },
+    arguments: { product_id: 'M001-P0001', attribute: 'surface', requested_value: 'track' },
   });
   console.log(JSON.stringify(suit.structuredContent, null, 2));
 
-  console.log('\n--- create_offer: M01-P0013 ---');
+  console.log('\n--- create_offer: M001-P0001 ---');
   const offer = await client.callTool({
     name: 'create_offer',
-    arguments: { product_id: 'M01-P0013', quantity: 1 },
+    arguments: { product_id: 'M001-P0001', quantity: 1 },
   });
   console.log(JSON.stringify(offer.structuredContent, null, 2));
 

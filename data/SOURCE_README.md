@@ -1,71 +1,51 @@
-# Machina — nine synthetic merchants
+# Machina — 100 synthetic merchants (no images)
 
-> Every merchant, product, review, claim, price, URL and image in this dataset is
-> fictional. Do not present any record as real merchant or customer data.
+> All merchants, brands, products, reviews, prices, URLs and evidence in this dataset are fictional. Do not present any record as real merchant or customer data.
 
-This standalone showcase database contains nine merchants in nine separate retail
-verticals. Each merchant has 50 products, and every product follows the same deep
-catalogue format used by the original Velora single-merchant demo.
+This standalone dataset follows the deep catalogue structure of the existing Machina nine-merchant showcase. It contains 100 distinct merchants, 50 products per merchant and no image files or image metadata.
 
-The schema now separates canonical product identity, merchant catalogue listings,
-variants, current merchant offers, and historical price/inventory records. It also
-contains the normalized matching and synchronization structures described in the
-Machina Product & Merchant Database specification.
+## Dataset size
 
-| Merchant | Vertical | Products |
-|---|---|---:|
-| Velora Runworks | Running shoes | 50 |
-| Northpine Carry | Travel backpacks | 50 |
-| Sonora Audio Lab | Wireless headphones | 50 |
-| Emberline Coffee | Drip coffee makers | 50 |
-| LumaDerm Studio | Facial skincare | 50 |
-| Aster Deskworks | Desk lamps | 50 |
-| Tidecraft Hydration | Reusable water bottles | 50 |
-| Stillform Movement | Yoga mats | 50 |
-| Meridian Time Co. | Analog wristwatches | 50 |
+| Entity | Count |
+|---|---:|
+| Merchants | 100 |
+| Retail verticals | 9 |
+| Products | 5,000 |
+| Product families | 500 |
+| Variants | 15,000 |
+| Current merchant offers | 15,000 |
+| Price-history records | 30,000 |
+| Reviews | 100,000 |
+| Review-aspect records | 100,000 |
+| Product facts | 40,000 |
+| Evidence documents | 5,000 |
+| Image files / media records | 0 |
+
+The nine verticals are running shoes, travel backpacks, wireless headphones, coffee makers, facial skincare, desk lamps, water bottles, yoga mats and wristwatches. Merchants are distributed deterministically across these verticals.
 
 ## Contents
 
-- `machina_9_merchants.sqlite` — ready-to-query SQLite database.
+- `machina_100_merchants.sqlite` — ready-to-query SQLite database.
 - `schema.sql` — relational schema and MCP-safe views.
 - `data/` — portable JSON and JSONL exports.
-- `contracts/` — JSON Schema contracts for PurchaseIntent and ranked responses.
-- `assets/products/<product_id>/` — four indexed WebP views plus a thumbnail.
-- `source_images/` — nine original AI-generated contact sheets.
-- `IMAGE_PROMPTS.md` — source-image provenance and prompt set.
+- `contracts/` — JSON Schema contracts for purchase intent and ranked results.
 - `generator/` — deterministic generator and validator.
-- `backups/` — the SQLite database from before the offer-model upgrade.
 
-## Core data model
+`media_assets` remains in the relational schema for compatibility, but contains zero rows. `mcp_product_cards.primary_image_path` and `primary_image_alt` are always `NULL`.
+
+## Core model
 
 ```text
-canonical_products
-        ↓
-products (merchant listing + raw source JSON)
-        ↓
-product_variants
-        ↓
-merchant_offers (current price, stock, shipping, returns, warranty)
-        ↓
-price_history + inventory_levels
+merchants
+  -> brands + categories + product_families
+  -> products -> product_variants
+  -> merchant_offers -> price_history + inventory_levels
+  -> reviews + review_aspects
+  -> product_facts -> fact_evidence -> evidence_documents
+  -> product_search_documents + product_keywords + product_aliases
 ```
 
-Additional matching and operations tables:
-
-- `product_keywords` — normalized terms with source and confidence.
-- `product_facts` — evidence-backed structured attributes and visibility controls.
-- `product_aliases` — alternate names and merchant SKU lookup.
-- `merchant_shipping_rules` — country-level fees and delivery estimates.
-- `catalogue_sync_logs` — full-catalogue and offer-refresh audit records.
-- `search_requests` — nine stable PurchaseIntent examples.
-- `search_results` — five evidence-based ranked options per example.
-
-Because the showcase deliberately assigns a different retail vertical to each
-merchant, every current canonical product has one merchant listing. The schema supports
-multiple listings pointing to the same `canonical_product_id` when overlapping
-merchant catalogues are added later.
-
-## Regenerate
+## Regenerate and validate
 
 ```bash
 npm install
@@ -73,18 +53,8 @@ npm run generate
 npm run validate
 ```
 
-`npm run generate` reuses existing image assets. Run `npm run generate:images` only
-when the WebP renditions also need to be regenerated from the nine source sheets.
+Generation is deterministic under seed `MACHINA_100_MERCHANTS_NO_IMAGES_V1_2026`.
 
-## MCP behaviour
+## MCP guidance
 
-Always require or resolve a `merchant_id` before search. Rank with
-`product_search_documents.internal_matching_text`, but return fields from
-`mcp_product_cards` and `mcp_agent_visible_facts`. Search should return at most five
-products. Details should return one product, its four image references, approved
-agent-visible facts, no more than three review highlights, and only relevant exact
-evidence spans. Do not send image bytes, full review corpora, full evidence documents,
-`MATCHING_ONLY` values or `INTERNAL_ONLY` values through MCP.
-
-Use `mcp_ranked_product_options` for the response projection. A complete generated
-example is available at `data/example_purchase_response.json`.
+Resolve or require `merchant_id` before product search. Search should return at most five products. Product details should return one product at a time, at most three review highlights, approved agent-visible facts and only relevant exact evidence spans. Image fields should be omitted from the response when their value is `NULL`.

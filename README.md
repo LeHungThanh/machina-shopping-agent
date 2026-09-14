@@ -26,11 +26,11 @@ Machina will:
 
    | Product | Merchant | Price | Badge | Why |
    |---|---|---|---|---|
-   | Velora Ridge Crest 13 | Velora Runworks | $149.40 | best overall | Neutral support, track surface, wide fit all confirmed |
-   | Ridgemark Ridge Crest 13 | Ridgemark Trailhead | $161.84 | fastest delivery | Ships in 1 day |
+   | Aldercraft Ridge Crest 13 | Aldercraft Runworks | $149.40 | best overall | Neutral support, track surface, wide fit confirmed — also the lowest price and shipping fee |
+   | Lumaridge Ridge Crest 13 | Lumaridge Runworks | $152.40 | fastest delivery | Ships in 2–5 days |
 
-4. Every product carries a real image, and asking for details returns the actual photo
-   inline, not just a link.
+   Results routinely span 10+ genuinely distinct, competing merchants per category — this
+   isn't a demo of 2–3 hand-picked sellers.
 
 ## Why "CONTROL" matters
 
@@ -77,14 +77,16 @@ committed.
 **3. Create and load the database**
 ```bash
 npm run db:init    # creates machina.db from data/schema.sql
-npm run db:seed    # bulk-loads the synthetic 9-merchant dataset into it
+npm run db:seed    # bulk-loads the synthetic 100-merchant dataset into it
 ```
-Expected output ends with a line per table, e.g. `seeded products: 550 rows`.
+Expected output ends with a line per table, e.g. `seeded products: 5000 rows`. This step
+loads a genuinely large dataset (100 merchants, 5,000 products, 100,000 reviews) — it takes
+a little while and has no progress bar.
 
 **4. Confirm everything is wired correctly**
 ```bash
 npm run typecheck   # should print nothing but the command itself — no errors
-npm test            # 27 tests, all green, no API key needed for this step
+npm test            # 34 tests, all green, no API key needed for this step
 ```
 
 **5. Try a real, live search** (this step needs your API key from step 2):
@@ -92,8 +94,8 @@ npm test            # 27 tests, all green, no API key needed for this step
 npx tsx tests/mcp-smoke.ts
 ```
 This starts the real MCP server and drives it exactly like an AI agent would — search,
-product details (with an embedded image), suitability check, and a mock offer. If this
-prints real JSON results with no errors, the whole system is working end to end.
+product details, suitability check, and a mock offer. If this prints real JSON results with
+no errors, the whole system is working end to end.
 
 ## Using it as an AI agent (the main way this is meant to be used)
 
@@ -143,11 +145,13 @@ LLM step at the end that turns those factors into a sentence — it never influe
 ranking itself. Full technical details, invariants, and known limitations live in
 [`AGENTS.md`](AGENTS.md).
 
-## Repository size note
+## No product images in this dataset
 
-`data/assets/` bundles ~71MB of real (synthetic) product photos so `get_product_details` can
-return actual images. If you're cloning just to read the code, this is the bulk of the
-download.
+The current 100-merchant dataset ships with zero images (`media_assets` is intentionally
+empty — see its own README under `data/SOURCE_README.md`). `get_product_details`'s `images`
+field is always `[]`; the code that embeds a real product photo into the MCP response is
+still there and works (it was built and verified against an earlier 9-merchant dataset that
+did include images) — it simply has nothing to embed with this particular dataset.
 
 ## License
 
